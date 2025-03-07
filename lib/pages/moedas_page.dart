@@ -104,7 +104,7 @@ class _MoedasPageState extends State<MoedasPage> {
       floatingActionButton:
           selecionadas.isNotEmpty
               ? FloatingActionButton.extended(
-                onPressed: () {},
+                onPressed: () { },
                 icon: Icon(Icons.star),
                 label: Text(
                   'FAVORITAR',
