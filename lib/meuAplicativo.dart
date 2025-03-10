@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:my_app/pages/moedas_page.dart';
+import 'package:my_app/pages/home_page.dart';
 
 class MeuAplicativo extends StatelessWidget {
   const MeuAplicativo({super.key});
@@ -16,7 +16,7 @@ class MeuAplicativo extends StatelessWidget {
               Brightness.light,
         ),
       ),
-      home: MoedasPage(),
+      home: HomePage(),
     );
   }
 }
