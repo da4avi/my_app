@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:my_app/configs/app_settings.dart';
 import 'package:my_app/models/moeda.dart';
 import 'package:my_app/pages/moedas_detalhes_page.dart';
+import 'package:my_app/repositories/favoritas_repository.dart';
 import 'package:my_app/repositories/moeda_repository.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 class MoedasPage extends StatefulWidget {
   const MoedasPage({super.key});
@@ -13,8 +16,34 @@ class MoedasPage extends StatefulWidget {
 
 class _MoedasPageState extends State<MoedasPage> {
   final tabela = MoedaRepository.tabela;
-  NumberFormat real = NumberFormat.currency(locale: 'pt_BR', name: 'R\$');
+  late NumberFormat real;
+  late Map<String, String> loc;
   List<Moeda> selecionadas = [];
+  late FavoritasRepository favoritas;
+
+  readNumberFormat() {
+    loc = context.watch<AppSettings>().locale;
+    real = NumberFormat.currency(locale: loc['locale'], name: loc['name']);
+  }
+
+  changeLanguageButton() {
+    final locale = loc['locale'] == 'pt_BR' ? 'en_US' : 'pt_BR';
+    final name = loc['locale'] == 'pt_BR' ? '\$' : 'R\$';
+
+    return PopupMenuButton(
+      icon: Icon(Icons.language, color: Colors.white),
+      itemBuilder: (context) => [
+        PopupMenuItem(child: ListTile(
+          leading: Icon(Icons.swap_vert),
+          title: Text('Usar $locale'),
+          onTap: () {
+            context.read<AppSettings>().setLocale(locale, name);
+            Navigator.pop(context);
+          },
+        ))
+      ],
+    );
+  } 
 
   appBarDinamica() {
     if (selecionadas.isEmpty) {
@@ -27,6 +56,9 @@ class _MoedasPageState extends State<MoedasPage> {
           fontSize: 20,
           fontWeight: FontWeight.bold,
         ),
+        actions: [
+          changeLanguageButton(),
+        ],
       );
     } else {
       return AppBar(
@@ -40,15 +72,19 @@ class _MoedasPageState extends State<MoedasPage> {
         ),
         leading: IconButton(
           onPressed: () {
-            setState(() {
-              selecionadas = [];
-            });
+            limparSelecionadas();
           },
           icon: Icon(Icons.arrow_back),
           color: Colors.white,
         ),
       );
     }
+  }
+
+  limparSelecionadas() {
+    setState(() {
+      selecionadas = [];
+    });
   }
 
   mostrarDetalhes(Moeda moeda) {
@@ -60,6 +96,10 @@ class _MoedasPageState extends State<MoedasPage> {
 
   @override
   Widget build(BuildContext context) {
+    // favoritas = Provider.of<FavoritasRepository>(context);
+    favoritas = context.watch<FavoritasRepository>();
+    readNumberFormat();
+
     return Scaffold(
       appBar: appBarDinamica(),
       body: ListView.separated(
@@ -75,9 +115,21 @@ class _MoedasPageState extends State<MoedasPage> {
                       width: 40,
                       child: Image.asset(tabela[moeda].icone),
                     ),
-            title: Text(
-              tabela[moeda].nome,
-              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 17),
+            title: Row(
+              children: [
+                Text(
+                  tabela[moeda].nome,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 17,
+                  ),
+                ),
+                if (favoritas.lista.any((fav) => fav.sigla == tabela[moeda].sigla))
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Icon(Icons.star, color: Colors.amber, size: 15),
+                  ),
+              ],
             ),
             trailing: Text(
               real.format(tabela[moeda].preco),
@@ -104,7 +156,10 @@ class _MoedasPageState extends State<MoedasPage> {
       floatingActionButton:
           selecionadas.isNotEmpty
               ? FloatingActionButton.extended(
-                onPressed: () { },
+                onPressed: () {
+                  favoritas.saveAll(selecionadas);
+                  limparSelecionadas();
+                },
                 icon: Icon(Icons.star),
                 label: Text(
                   'FAVORITAR',
