@@ -1,23 +1,23 @@
 import 'package:sqflite/sqflite.dart';
-// ignore: depend_on_referenced_packages
 import 'package:path/path.dart';
 
 class DB {
-  // construtor com acesso priv
+  // Construtor privado
   DB._();
 
-  // criar uma instancia de db
+  // Criar uma instância de DB
   static final DB instance = DB._();
-  //instancia do sqlite
+
+  // Instância do SQLite
   static Database? _database;
 
-  get database async {
-    // ignore: recursive_getters
-    if(_database != null) return database;
-    return await _initDatabase();
+  Future<Database> get database async {
+    if (_database != null) return _database!;
+    _database = await _initDatabase();
+    return _database!;
   }
 
-  _initDatabase() async {
+  Future<Database> _initDatabase() async {
     return await openDatabase(
       join(await getDatabasesPath(), 'cripto.db'),
       version: 1,
@@ -25,7 +25,7 @@ class DB {
     );
   }
 
-  _onCreate(db, versao) async {
+  Future<void> _onCreate(Database db, int version) async {
     await db.execute(_conta);
     await db.execute(_carteira);
     await db.execute(_historico);
@@ -40,7 +40,7 @@ class DB {
   ''';
 
   String get _carteira => '''
-    CREATE TABLE conta (
+    CREATE TABLE carteira (  -- Correção: Nome da tabela agora é "carteira"
       sigla TEXT PRIMARY KEY,
       moeda TEXT,
       quantidade TEXT
@@ -48,7 +48,7 @@ class DB {
   ''';
 
   String get _historico => '''
-    CREATE TABLE conta (
+    CREATE TABLE historico (  -- Correção: Nome da tabela agora é "historico"
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       data_operacao INT,
       tipo_operacao TEXT,
@@ -58,5 +58,4 @@ class DB {
       quantidade TEXT
     )
   ''';
-
 }
